@@ -21,7 +21,7 @@ source:
 
 build:
   number: 1
-  skip: true # [py<36]
+  skip: true # [py<36 or s390x]
 
 outputs:
   - name: {{ name }}-api
@@ -54,8 +54,6 @@ outputs:
         - pip check
       requires:
         - pip
-    about:
-      summary: OpenTelemetry Python | API
   - name: {{ name }}-sdk
     build:
       script: cd opentelemetry-sdk && python -m pip install . -vv --no-deps
@@ -85,8 +83,6 @@ outputs:
         - pip check
       requires:
         - pip
-    about:
-      summary: OpenTelemetry Python | SDK
   - name: {{ name }}-proto
     build:
       script: cd opentelemetry-proto && python -m pip install . -vv --no-deps
@@ -112,8 +108,6 @@ outputs:
         - pip check
       requires:
         - pip
-    about:
-      summary: OpenTelemetry Python | Proto
   - name: {{ name }}-semantic-conventions
     build:
       script: cd opentelemetry-semantic-conventions && python -m pip install . -vv --no-deps
@@ -135,8 +129,6 @@ outputs:
         - pip check
       requires:
         - pip
-    about:
-      summary: OpenTelemetry Python | Semantic Conventions
   - name: {{ name }}-exporter-jaeger-proto-grpc
     build:
       script: cd exporter/opentelemetry-exporter-jaeger-proto-grpc && python -m pip install . -vv --no-deps
@@ -164,8 +156,6 @@ outputs:
         - pip check
       requires:
         - pip
-    about:
-      summary: OpenTelemetry Python | Jaeger Protobuf Exporter
   - name: {{ name }}-exporter-jaeger-thrift
     build:
       script: cd exporter/opentelemetry-exporter-jaeger-thrift && python -m pip install . -vv --no-deps
@@ -191,8 +181,6 @@ outputs:
         - pip check
       requires:
         - pip
-    about:
-      summary: OpenTelemetry Python | Jaeger Thrift Exporter
   - name: {{ name }}-exporter-jaeger
     build:
       script: cd exporter/opentelemetry-exporter-jaeger && python -m pip install . -vv --no-deps
@@ -213,8 +201,6 @@ outputs:
         - pip check
       requires:
         - pip
-    about:
-      summary: OpenTelemetry Python | Jaeger Exporters
   - name: {{ name }}-exporter-opencensus
     build:
       script: cd exporter/opentelemetry-exporter-opencensus && python -m pip install . -vv --no-deps
@@ -241,8 +227,6 @@ outputs:
         - pip check
       requires:
         - pip
-    about:
-      summary: OpenTelemetry Python | OpenCensus Exporter
   - name: {{ name }}-exporter-otlp-proto-grpc
     build:
       script: cd exporter/opentelemetry-exporter-otlp-proto-grpc && python -m pip install . -vv --no-deps
@@ -271,8 +255,6 @@ outputs:
         - pip check
       requires:
         - pip
-    about:
-      summary: OpenTelemetry Python | Collector Protobuf over gRPC Exporter
   - name: {{ name }}-exporter-otlp-proto-http
     build:
       script: cd exporter/opentelemetry-exporter-otlp-proto-http && python -m pip install . -vv --no-deps
@@ -299,8 +281,6 @@ outputs:
         - pip check
       requires:
         - pip
-    about:
-      summary: OpenTelemetry Python | Collector Protobuf over HTTP Exporter
   - name: {{ name }}-exporter-otlp
     build:
       script: cd exporter/opentelemetry-exporter-otlp && python -m pip install . -vv --no-deps
@@ -321,8 +301,6 @@ outputs:
         - pip check
       requires:
         - pip
-    about:
-      summary: OpenTelemetry Python | Collector Exporters
   - name: {{ name }}-exporter-prometheus
     build:
       script: cd exporter/opentelemetry-exporter-prometheus && python -m pip install . -vv --no-deps
@@ -345,8 +323,6 @@ outputs:
         - pip check
       requires:
         - pip
-    about:
-      summary: OpenTelemetry Python | Prometheus Exporter
   - name: {{ name }}-exporter-zipkin-json
     build:
       script: cd exporter/opentelemetry-exporter-zipkin-json && python -m pip install . -vv --no-deps
@@ -371,8 +347,6 @@ outputs:
         - pip check
       requires:
         - pip
-    about:
-      summary: OpenTelemetry Python | Zipkin JSON Exporter
   - name: {{ name }}-exporter-zipkin-proto-http
     build:
       script: cd exporter/opentelemetry-exporter-zipkin-proto-http && python -m pip install . -vv --no-deps
@@ -398,8 +372,6 @@ outputs:
         - pip check
       requires:
         - pip
-    about:
-      summary: OpenTelemetry Python | Zipkin Profobuf Exporter
   - name: {{ name }}-exporter-zipkin
     build:
       script: cd exporter/opentelemetry-exporter-zipkin && python -m pip install . -vv --no-deps
@@ -420,8 +392,6 @@ outputs:
         - pip check
       requires:
         - pip
-    about:
-      summary: OpenTelemetry Python | Zipkin Exporters
   - name: {{ name }}-shim
     build:
       script: cd shim/opentelemetry-opentracing-shim && python -m pip install . -vv --no-deps
@@ -445,8 +415,6 @@ outputs:
         - pip check
       requires:
         - pip
-    about:
-      summary: OpenTelemetry Python | OpenTracing Shim
   - name: {{ name }}-propagator-b3
     build:
       script: cd propagator/opentelemetry-propagator-b3 && python -m pip install . -vv --no-deps
@@ -468,8 +436,6 @@ outputs:
         - pip check
       requires:
         - pip
-    about:
-      summary: OpenTelemetry Python | B3 Propagator
   - name: {{ name }}-propagator-jaeger
     build:
       script: cd propagator/opentelemetry-propagator-jaeger && python -m pip install . -vv --no-deps
@@ -490,8 +456,6 @@ outputs:
         - pip check
       requires:
         - pip
-    about:
-      summary: OpenTelemetry Python | Jaeger Propagator
   - name: {{ name }}-test-utils
     build:
       script: cd tests/opentelemetry-test-utils && python -m pip install . -vv --no-deps
@@ -522,8 +486,6 @@ outputs:
         - pip check
       requires:
         - pip
-    about:
-      summary: OpenTelemetry Python | Test Utilities
 
 about:
   summary: OpenTelemetry Python
