@@ -2,8 +2,14 @@
 {% set name = "opentelemetry" %}
 {% set version = "1.12.0" %}
 {% set sha256 = "305c72387ee98b4646c6933fc43e25c5da662cb31b3fee87972713f40b492b6d" %}
+{% set urlbase = "https://github.com/" + author + "/" + name + "-python" %}
 
-{% set deprecated_dep = "deprecated >=1.2.6" %}
+# We are making heavy use of macros and variables here to ensure a
+# consistent recipe structure across all outputs. Use "conda render
+# recipe" to examine and/or debug the fully rendered output.
+
+# Any dependency that appears in more than once recipe should be
+# encapsulated as a variable to ensure consistent pinning.
 {% set protobuf_dep   = "protobuf >=3.13,<4.0a0" %}
 {% set grpcio_dep     = "grpcio >=1.0.0,<2.0.0a0" %}
 {% set googleapis_dep = "googleapis-common-protos >=1.52,<1.56.3" %}
@@ -11,22 +17,26 @@
 {% set backoff_dep    = "backoff >=1.10.0,<3.0.0a0" %} # [py>=37]
 {% set backoff_dep    = "backoff >=1.10.0,<2.0.0a0" %} # [py<37]
 
-package:
-  name: {{ name|lower }}
-  version: {{ version }}
-
-source:
-  url: https://github.com/{{ author }}/{{ name }}-python/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: {{ sha256 }}
-
-build:
-  number: 1
-  skip: true # [py<36 or s390x]
-
-outputs:
-  - name: {{ name }}-api
+# Add opentelemetry dependencies simply by providing their
+# suffixes as additional arguments; e.g., 'api', 'sdk'. Add other
+# dependencies by supplying them as a list intended 6 spaces.
+{% macro header(submodule, which, subdir) -%}
+{%- set subdir = ((subdir + '/') if subdir else '') + 'opentelemetry-' + submodule -%}
+    about:
+      summary: OpenTelemetry Python | {{ which }}
+      home: {{ urlbase }}/tree/main/{{ subdir }}
+      license: Apache-2.0
+      license_family: Apache
+      license_file: LICENSE
+      doc_url: https://opentelemetry-python.readthedocs.io
+      doc_source_url: {{ urlbase }}/tree/main/docs
+      dev_url: {{ urlbase }}
+      description: OpenTelemetry, also known as OTel for short, is a vendor-neutral
+        open-source observability framework for instrumenting, generating, collecting,
+        and exporting telemetry data such as traces, metrics, logs. As an industry
+        standard, it is natively supported by a number of vendors.
     build:
-      script: cd opentelemetry-api && python -m pip install . -vv --no-deps
+      script: cd {{ subdir }} && python -m pip install . -vv --no-deps
     requirements:
       host:
         - python
@@ -35,10 +45,39 @@ outputs:
         - wheel
       run:
         - python
-        - aiocontextvars # [py<37]
-        - {{ deprecated_dep }}
+        {% for arg in varargs %}
+        - {{ pin_subpackage(name + '-' + arg, exact=True) }}
+        {%- endfor %}
+{%- endmacro %}
+
+# Add the imports to test as a list indented 4 spaces.
+{% macro test_imports() -%}
     test:
+      commands:
+        - pip check
+      requires:
+        - pip
       imports:
+{%- endmacro %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: {{ urlbase }}/archive/refs/tags/v{{ version }}.tar.gz
+  sha256: {{ sha256 }}
+
+build:
+  number: 1
+  skip: true # [py<36]
+
+outputs:
+  - name: {{ name }}-api
+    {{ header('api', 'API', '') }}
+        - aiocontextvars  # [py<37]
+        - deprecated >=1.2.6
+    {{ test_imports() }}
         - opentelemetry
         - opentelemetry.attributes
         - opentelemetry.baggage
@@ -50,27 +89,20 @@ outputs:
         - opentelemetry.util
         - opentelemetry.environment_variables
         - opentelemetry.version
-      commands:
-        - pip check
-      requires:
-        - pip
+
+  - name: {{ name }}-semantic-conventions
+    {{ header('semantic-conventions', 'Semantic Conventions', '') }}
+    {{ test_imports() }}
+        - opentelemetry.semconv
+        - opentelemetry.semconv.resource
+        - opentelemetry.semconv.trace
+        - opentelemetry.semconv.version
+
   - name: {{ name }}-sdk
-    build:
-      script: cd opentelemetry-sdk && python -m pip install . -vv --no-deps
-    requirements:
-      host:
-        - python
-        - pip
-        - setuptools
-        - wheel
-      run:
-        - python
-        - {{ pin_subpackage(name + '-api', exact=True) }}
-        - {{ pin_subpackage(name + '-semantic-conventions', exact=True) }}
+    {{ header('sdk', 'SDK', '', 'api', 'semantic-conventions') }}
         - dataclasses ==0.8  # [py<3.7]
         - typing-extensions >=3.7.4
-    test:
-      imports:
+    {{ test_imports() }}
         - opentelemetry.sdk
         - opentelemetry.sdk.error_handler
         - opentelemetry.sdk.metrics
@@ -79,24 +111,11 @@ outputs:
         - opentelemetry.sdk.util
         - opentelemetry.sdk.environment_variables
         - opentelemetry.sdk.version
-      commands:
-        - pip check
-      requires:
-        - pip
+
   - name: {{ name }}-proto
-    build:
-      script: cd opentelemetry-proto && python -m pip install . -vv --no-deps
-    requirements:
-      host:
-        - python
-        - pip
-        - setuptools
-        - wheel
-      run:
-        - python
+    {{ header('proto', 'Protobuf', '') }}
         - {{ protobuf_dep }}
-    test:
-      imports:
+    {{ test_imports() }}
         - opentelemetry.proto
         - opentelemetry.proto.collector
         - opentelemetry.proto.common
@@ -104,374 +123,126 @@ outputs:
         - opentelemetry.proto.resource
         - opentelemetry.proto.trace
         - opentelemetry.proto.version
-      commands:
-        - pip check
-      requires:
-        - pip
-  - name: {{ name }}-semantic-conventions
-    build:
-      script: cd opentelemetry-semantic-conventions && python -m pip install . -vv --no-deps
-    requirements:
-      host:
-        - python
-        - pip
-        - setuptools
-        - wheel
-      run:
-        - python
-    test:
-      imports:
-        - opentelemetry.semconv
-        - opentelemetry.semconv.resource
-        - opentelemetry.semconv.trace
-        - opentelemetry.semconv.version
-      commands:
-        - pip check
-      requires:
-        - pip
+
   - name: {{ name }}-exporter-jaeger-proto-grpc
-    build:
-      script: cd exporter/opentelemetry-exporter-jaeger-proto-grpc && python -m pip install . -vv --no-deps
-    requirements:
-      host:
-        - python
-        - pip
-        - setuptools
-        - wheel
-      run:
-        - python
-        - {{ pin_subpackage(name + '-api', exact=True) }}
-        - {{ pin_subpackage(name + '-sdk', exact=True) }}
+    {{ header('exporter-jaeger-proto-grpc', 'Jaeger Protobuf Exporter', 'exporter', 'sdk') }}
         - {{ grpcio_dep }}
         - {{ googleapis_dep }}
-    test:
-      imports:
+    {{ test_imports() }}
         - opentelemetry.exporter.jaeger.proto.grpc
         - opentelemetry.exporter.jaeger.proto.grpc.gen
         - opentelemetry.exporter.jaeger.proto.grpc.send
         - opentelemetry.exporter.jaeger.proto.grpc.translate
         - opentelemetry.exporter.jaeger.proto.grpc.util
         - opentelemetry.exporter.jaeger.proto.grpc.version
-      commands:
-        - pip check
-      requires:
-        - pip
+
   - name: {{ name }}-exporter-jaeger-thrift
-    build:
-      script: cd exporter/opentelemetry-exporter-jaeger-thrift && python -m pip install . -vv --no-deps
-    requirements:
-      host:
-        - python
-        - pip
-        - setuptools
-        - wheel
-      run:
-        - python
-        - {{ pin_subpackage(name + '-api', exact=True) }}
-        - {{ pin_subpackage(name + '-sdk', exact=True) }}
+    {{ header('exporter-jaeger-thrift', 'Jaeger Thrift Exporter', 'exporter', 'sdk') }}
         - thrift >=0.10.0
-    test:
-      imports:
+    {{ test_imports() }}
         - opentelemetry.exporter.jaeger.thrift
         - opentelemetry.exporter.jaeger.thrift.gen
         - opentelemetry.exporter.jaeger.thrift.translate
         - opentelemetry.exporter.jaeger.thrift.send
         - opentelemetry.exporter.jaeger.thrift.version
-      commands:
-        - pip check
-      requires:
-        - pip
+
   - name: {{ name }}-exporter-jaeger
-    build:
-      script: cd exporter/opentelemetry-exporter-jaeger && python -m pip install . -vv --no-deps
-    requirements:
-      host:
-        - python
-        - pip
-        - setuptools
-        - wheel
-      run:
-        - python
-        - {{ pin_subpackage(name + '-exporter-jaeger-proto-grpc', exact=True) }}
-        - {{ pin_subpackage(name + '-exporter-jaeger-thrift', exact=True) }}
-    test:
-      imports:
+    {{ header('exporter-jaeger', 'Jaeger Exporters', 'exporter', 'exporter-jaeger-proto-grpc','exporter-jaeger-thrift') }}
+    {{ test_imports() }}
         - opentelemetry.exporter.jaeger.version
-      commands:
-        - pip check
-      requires:
-        - pip
+
   - name: {{ name }}-exporter-opencensus
-    build:
-      script: cd exporter/opentelemetry-exporter-opencensus && python -m pip install . -vv --no-deps
-    requirements:
-      host:
-        - python
-        - pip
-        - setuptools
-        - wheel
-      run:
-        - python
-        - {{ pin_subpackage(name + '-api', exact=True) }}
-        - {{ pin_subpackage(name + '-sdk', exact=True) }}
+    {{ header('exporter-opencensus', 'OpenCensus Exporter', 'exporter', 'sdk') }}
         - {{ grpcio_dep }}
         - {{ protobuf_dep }}
         - opencensus-proto >=0.1.0,<1.0.0a0
-    test:
-      imports:
+    {{ test_imports() }}
         - opentelemetry.exporter.opencensus
         - opentelemetry.exporter.opencensus.trace_exporter
         - opentelemetry.exporter.opencensus.util
         - opentelemetry.exporter.opencensus.version
-      commands:
-        - pip check
-      requires:
-        - pip
+
   - name: {{ name }}-exporter-otlp-proto-grpc
-    build:
-      script: cd exporter/opentelemetry-exporter-otlp-proto-grpc && python -m pip install . -vv --no-deps
-    requirements:
-      host:
-        - python
-        - pip
-        - setuptools
-        - wheel
-      run:
-        - python
-        - {{ pin_subpackage(name + '-api', exact=True) }}
-        - {{ pin_subpackage(name + '-sdk', exact=True) }}
-        - {{ pin_subpackage(name + '-proto', exact=True) }}
+    {{ header('exporter-otlp-proto-grpc', 'Collector Protobuf over gRPC Exporter', 'exporter', 'sdk', 'proto') }}
         - {{ grpcio_dep }}
         - {{ googleapis_dep }}
         - {{ backoff_dep }}
-    test:
-      imports:
+    {{ test_imports() }}
         - opentelemetry.exporter.otlp.proto.grpc
         - opentelemetry.exporter.otlp.proto.grpc.metric_exporter
         - opentelemetry.exporter.otlp.proto.grpc.trace_exporter
         - opentelemetry.exporter.otlp.proto.grpc.exporter
         - opentelemetry.exporter.otlp.proto.grpc.version
-      commands:
-        - pip check
-      requires:
-        - pip
+
   - name: {{ name }}-exporter-otlp-proto-http
-    build:
-      script: cd exporter/opentelemetry-exporter-otlp-proto-http && python -m pip install . -vv --no-deps
-    requirements:
-      host:
-        - python
-        - pip
-        - setuptools
-        - wheel
-      run:
-        - python
-        - {{ pin_subpackage(name + '-api', exact=True) }}
-        - {{ pin_subpackage(name + '-sdk', exact=True) }}
-        - {{ pin_subpackage(name + '-proto', exact=True) }}
+    {{ header('exporter-otlp-proto-http', 'Collector Protobuf over HTTP Exporter', 'exporter', 'sdk', 'proto') }}
         - {{ requests_dep }}
         - {{ googleapis_dep }}
         - {{ backoff_dep }}
-    test:
-      imports:
+    {{ test_imports() }}
         - opentelemetry.exporter.otlp.proto.http
         - opentelemetry.exporter.otlp.proto.http.trace_exporter
         - opentelemetry.exporter.otlp.proto.http.version
-      commands:
-        - pip check
-      requires:
-        - pip
+
   - name: {{ name }}-exporter-otlp
-    build:
-      script: cd exporter/opentelemetry-exporter-otlp && python -m pip install . -vv --no-deps
-    requirements:
-      host:
-        - python
-        - pip
-        - setuptools
-        - wheel
-      run:
-        - python
-        - {{ pin_subpackage(name + '-exporter-otlp-proto-grpc', exact=True) }}
-        - {{ pin_subpackage(name + '-exporter-otlp-proto-http', exact=True) }}
-    test:
-      imports:
+    {{ header('exporter-otlp', 'Collector Exporters', 'exporter', 'exporter-otlp-proto-grpc', 'exporter-otlp-proto-http') }}
+    {{ test_imports() }}
         - opentelemetry.exporter.otlp.version
-      commands:
-        - pip check
-      requires:
-        - pip
+
   - name: {{ name }}-exporter-prometheus
-    build:
-      script: cd exporter/opentelemetry-exporter-prometheus && python -m pip install . -vv --no-deps
-    requirements:
-      host:
-        - python
-        - pip
-        - setuptools
-        - wheel
-      run:
-        - python
-        - {{ pin_subpackage(name + '-api', exact=True) }}
-        - {{ pin_subpackage(name + '-sdk', exact=True) }}
+    {{ header('exporter-prometheus', 'Prometheus Exporter', 'exporter', 'sdk') }}
         - prometheus_client >=0.5.0,<1.0.0
-    test:
-      imports:
+    {{ test_imports() }}
         - opentelemetry.exporter.prometheus
         - opentelemetry.exporter.prometheus.version
-      commands:
-        - pip check
-      requires:
-        - pip
+
   - name: {{ name }}-exporter-zipkin-json
-    build:
-      script: cd exporter/opentelemetry-exporter-zipkin-json && python -m pip install . -vv --no-deps
-    requirements:
-      host:
-        - python
-        - pip
-        - setuptools
-        - wheel
-      run:
-        - python
-        - {{ pin_subpackage(name + '-api', exact=True) }}
-        - {{ pin_subpackage(name + '-sdk', exact=True) }}
+    {{ header('exporter-zipkin-json', 'Zipkin JSON Exporter', 'exporter', 'sdk') }}
         - {{ requests_dep }}
-    test:
-      imports:
+    {{ test_imports() }}
         - opentelemetry.exporter.zipkin
         - opentelemetry.exporter.zipkin.encoder
         - opentelemetry.exporter.zipkin.json
         - opentelemetry.exporter.zipkin.node_endpoint
-      commands:
-        - pip check
-      requires:
-        - pip
+
   - name: {{ name }}-exporter-zipkin-proto-http
-    build:
-      script: cd exporter/opentelemetry-exporter-zipkin-proto-http && python -m pip install . -vv --no-deps
-    requirements:
-      host:
-        - python
-        - pip
-        - setuptools
-        - wheel
-      run:
-        - python
-        - {{ pin_subpackage(name + '-api', exact=True) }}
-        - {{ pin_subpackage(name + '-sdk', exact=True) }}
-        - {{ pin_subpackage(name + '-exporter-zipkin-json', exact=True) }}
+    {{ header('exporter-zipkin-proto-http', 'Zipkin Protobuf Exporter', 'exporter', 'sdk', 'exporter-zipkin-json') }}
         - {{ protobuf_dep }}
         - {{ requests_dep }}
-    test:
-      imports:
+    {{ test_imports() }}
         - opentelemetry.exporter.zipkin.proto.http
         - opentelemetry.exporter.zipkin.proto.http.v2
         - opentelemetry.exporter.zipkin.proto.http.version
-      commands:
-        - pip check
-      requires:
-        - pip
+
   - name: {{ name }}-exporter-zipkin
-    build:
-      script: cd exporter/opentelemetry-exporter-zipkin && python -m pip install . -vv --no-deps
-    requirements:
-      host:
-        - python
-        - pip
-        - setuptools
-        - wheel
-      run:
-        - python
-        - {{ pin_subpackage(name + '-exporter-zipkin-json', exact=True) }}
-        - {{ pin_subpackage(name + '-exporter-zipkin-proto-http', exact=True) }}
-    test:
-      imports:
+    {{ header('exporter-zipkin', 'Zipkin Exporters', 'exporter', 'exporter-zipkin-json','exporter-zipkin-proto-http') }}
+    {{ test_imports() }}
         - opentelemetry.exporter.zipkin.version
-      commands:
-        - pip check
-      requires:
-        - pip
-  - name: {{ name }}-shim
-    build:
-      script: cd shim/opentelemetry-opentracing-shim && python -m pip install . -vv --no-deps
-    requirements:
-      host:
-        - python
-        - pip
-        - setuptools
-        - wheel
-      run:
-        - python
-        - {{ pin_subpackage(name + '-api', exact=True) }}
-        - {{ deprecated_dep }}
+
+  - name: {{ name }}-opentracing-shim
+    {{ header('opentracing-shim','OpenTracing Shim', 'shim', 'api') }}
         - opentracing >=2.0,<3.0.0a0
-    test:
-      imports:
+    {{ test_imports() }}
         - opentelemetry.shim.opentracing_shim
         - opentelemetry.shim.opentracing_shim.util
         - opentelemetry.shim.opentracing_shim.version
-      commands:
-        - pip check
-      requires:
-        - pip
+
   - name: {{ name }}-propagator-b3
-    build:
-      script: cd propagator/opentelemetry-propagator-b3 && python -m pip install . -vv --no-deps
-    requirements:
-      host:
-        - python
-        - pip
-        - setuptools
-        - wheel
-      run:
-        - python
-        - {{ pin_subpackage(name + '-api', exact=True) }}
-        - {{ deprecated_dep }}
-    test:
-      imports:
+    {{ header('propagator-b3', 'B3 Propagator', 'propagator', 'api') }}
+    {{ test_imports() }}
         - opentelemetry.propagators.b3
         - opentelemetry.propagators.b3.version
-      commands:
-        - pip check
-      requires:
-        - pip
+
   - name: {{ name }}-propagator-jaeger
-    build:
-      script: cd propagator/opentelemetry-propagator-jaeger && python -m pip install . -vv --no-deps
-    requirements:
-      host:
-        - python
-        - pip
-        - setuptools
-        - wheel
-      run:
-        - python
-        - {{ pin_subpackage(name + '-api', exact=True) }}
-    test:
-      imports:
+    {{ header('propagator-jaeger', 'Jaeger Propagator', 'propagator', 'api') }}
+    {{ test_imports() }}
         - opentelemetry.propagators.jaeger
         - opentelemetry.propagators.jaeger.version
-      commands:
-        - pip check
-      requires:
-        - pip
+
   - name: {{ name }}-test-utils
-    build:
-      script: cd tests/opentelemetry-test-utils && python -m pip install . -vv --no-deps
-    requirements:
-      host:
-        - python
-        - pip
-        - setuptools
-        - wheel
-      run:
-        - python
-        - {{ pin_subpackage(name + '-api', exact=True) }}
-        - {{ pin_subpackage(name + '-sdk', exact=True) }}
+    {{ header('test-utils', 'Test Utilities', 'tests', 'sdk') }}
         - asgiref >=3.0,<4.0.0a0
-    test:
-      imports:
+    {{ test_imports() }}
         - opentelemetry.test.asgitestutil
         - opentelemetry.test.concurrency_test
         - opentelemetry.test.globals_test
@@ -482,25 +253,6 @@ outputs:
         - opentelemetry.test.test_base
         - opentelemetry.test.version
         - opentelemetry.test.wsgitestutil
-      commands:
-        - pip check
-      requires:
-        - pip
-
-about:
-  summary: OpenTelemetry Python
-  home: https://github.com/open-telemetry/opentelemetry-python/tree/main/exporter/opentelemetry-exporter-otlp-proto-http
-  license: Apache-2.0
-  license_family: Apache
-  license_file: LICENSE
-  doc_url: https://opentelemetry-python.readthedocs.io/
-  doc_source_url: https://github.com/open-telemetry/opentelemetry-python/tree/main/docs
-  dev_url: https://github.com/open-telemetry/opentelemetry-python
-  description: |-
-    OpenTelemetry, also known as OTel for short, is a vendor-neutral open-source
-    Observability framework for instrumenting, generating, collecting, and exporting
-    telemetry data such as traces, metrics, logs. As an industry-standard
-    it is natively supported by a number of vendors.
 
 extra:
   recipe-maintainers:
