@@ -84,9 +84,8 @@ source:
   patches:
     # https://github.com/open-telemetry/opentelemetry-python/issues/2778
     # conda doesn't seem to have this problem
-    - gcp-version.patch
     # https://github.com/open-telemetry/opentelemetry-python/pull/2875
-    - fix-atexit.patch
+    - two-patches.patch
 
 build:
   number: 1
