@@ -20,4 +20,3 @@ index 8f9e10d9c..cfb032a39 100644
 -
      def force_flush(self, timeout_millis: float = 10_000) -> bool:
          deadline_ns = _time_ns() + timeout_millis * 10**6
- 

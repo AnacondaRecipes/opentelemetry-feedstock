@@ -10,4 +10,3 @@ index 36a5d2b27..2bc9200fc 100644
 +    googleapis-common-protos ~= 1.52
      opentelemetry-api ~= 1.3
      opentelemetry-sdk ~= 1.11
- 
