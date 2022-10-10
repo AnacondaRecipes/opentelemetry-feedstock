@@ -70,7 +70,11 @@ source:
 
 build:
   number: 1
-  skip: true # [py<36]
+  # cannot build on ppc64le until:
+  # - this issue is fixed without pinning
+  #   https://github.com/open-telemetry/opentelemetry-python/issues/2778
+  # - we build an older verison of googleapis-common-protos on ppc64le
+  skip: true # [py<36 or ppc64le]
 
 outputs:
   - name: {{ name }}-api
