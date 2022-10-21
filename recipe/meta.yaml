@@ -88,7 +88,7 @@ source:
     - two-patches.patch
 
 build:
-  number: 1
+  number: 2
   skip: true # [py<36]
 
 outputs:
@@ -96,6 +96,7 @@ outputs:
     {{ header('api', 'API', '') }}
         - aiocontextvars  # [py<37]
         - deprecated >=1.2.6
+        - setuptools >=16.0
     {{ test_imports('api', '') }}
         - opentelemetry
         - opentelemetry.attributes
