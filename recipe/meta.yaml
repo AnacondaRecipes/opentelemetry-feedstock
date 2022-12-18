@@ -1,7 +1,7 @@
 {% set author = "open-telemetry" %}
 {% set name = "opentelemetry" %}
-{% set version = "1.12.0" %}
-{% set sha256 = "305c72387ee98b4646c6933fc43e25c5da662cb31b3fee87972713f40b492b6d" %}
+{% set version = "1.15.0" %}
+{% set sha256 = "98b26b1c0c31bf974ddfd5604b45796312ba10b10fb24b2adc05ae999fa32fa8" %}
 {% set urlbase = "https://github.com/" + author + "/" + name + "-python" %}
 
 # We are making heavy use of macros and variables here to ensure a
@@ -10,12 +10,11 @@
 
 # Any dependency that appears in more than once recipe should be
 # encapsulated as a variable to ensure consistent pinning.
-{% set protobuf_dep   = "protobuf >=3.13,<4.0a0" %}
+{% set protobuf_dep   = "protobuf >=3.19,<5.0a0" %}
 {% set grpcio_dep     = "grpcio >=1.0.0,<2.0.0a0" %}
 {% set googleapis_dep = "googleapis-common-protos >=1.52,<2.0a0" %}
 {% set requests_dep   = "requests >=2.7,<3.0.0a0" %}
-# https://github.com/open-telemetry/opentelemetry-python/issues/2829
-{% set backoff_dep    = "backoff >=1.10.0,<2.0.0a0" %}
+{% set backoff_dep    = "backoff >=1.10.0,<3.0.0a0" %}
 
 # Add opentelemetry dependencies simply by providing their
 # suffixes as additional arguments; e.g., 'api', 'sdk'. Add other
@@ -64,6 +63,8 @@
         - pip
       {%- if submodule %}
         - pytest
+        - pytest-benchmark
+        - flaky
         - {{ name }}-test-utils
         {% for arg in varargs %}
         - {{ arg }}
@@ -84,18 +85,16 @@ source:
   patches:
     # https://github.com/open-telemetry/opentelemetry-python/issues/2778
     # conda doesn't seem to have this problem
-    # https://github.com/open-telemetry/opentelemetry-python/pull/2875
-    - two-patches.patch
+    - grpcio-version.patch
 
 build:
-  number: 2
-  skip: true # [py<36]
+  number: 1
+  skip: true # [py<37]
 
 outputs:
   - name: {{ name }}-api
     {{ header('api', 'API', '') }}
-        - aiocontextvars  # [py<37]
-        - deprecated >=1.2.6
+        - deprecated >=1.2.6,<2.0a0
         - setuptools >=16.0
     {{ test_imports('api', '') }}
         - opentelemetry
@@ -120,9 +119,8 @@ outputs:
 
   - name: {{ name }}-sdk
     {{ header('sdk', 'SDK', '', 'api', 'semantic-conventions') }}
-        - dataclasses ==0.8  # [py<3.7]
         - typing-extensions >=3.7.4
-    {{ test_imports('sdk', '', 'pytest-benchmark', 'flaky') }}
+    {{ test_imports('sdk', '') }}
         - opentelemetry.sdk
         - opentelemetry.sdk.error_handler
         - opentelemetry.sdk.metrics
@@ -187,7 +185,7 @@ outputs:
         - {{ grpcio_dep }}
         - {{ googleapis_dep }}
         - {{ backoff_dep }}
-    {{ test_imports('exporter-otlp-proto-grpc', 'exporter', 'pytest-benchmark') }}
+    {{ test_imports('exporter-otlp-proto-grpc', 'exporter', 'pytest-grpc') }}
         - opentelemetry.exporter.otlp.proto.grpc
         - opentelemetry.exporter.otlp.proto.grpc.metric_exporter
         - opentelemetry.exporter.otlp.proto.grpc.trace_exporter
@@ -199,7 +197,7 @@ outputs:
         - {{ requests_dep }}
         - {{ googleapis_dep }}
         - {{ backoff_dep }}
-    {{ test_imports('exporter-otlp-proto-http', 'exporter') }}
+    {{ test_imports('exporter-otlp-proto-http', 'exporter', 'responses') }}
         - opentelemetry.exporter.otlp.proto.http
         - opentelemetry.exporter.otlp.proto.http.trace_exporter
         - opentelemetry.exporter.otlp.proto.http.version
@@ -249,7 +247,7 @@ outputs:
 
   - name: {{ name }}-propagator-b3
     {{ header('propagator-b3', 'B3 Propagator', 'propagator', 'api') }}
-    {{ test_imports('propagator-b3', 'propagator', 'pytest-benchmark') }}
+    {{ test_imports('propagator-b3', 'propagator') }}
         - opentelemetry.propagators.b3
         - opentelemetry.propagators.b3.version
 
