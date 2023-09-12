@@ -88,8 +88,8 @@ source:
     - two-patches.patch
 
 build:
-  number: 2
-  skip: true # [py<36]
+  number: 3
+  skip: true # [py<37]
 
 outputs:
   - name: {{ name }}-api
