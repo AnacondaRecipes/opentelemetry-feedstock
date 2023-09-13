@@ -5,3 +5,5 @@ upload_channels:
 channels:
   - sfe1ed40
   - services
+
+upload_without_merge: True
