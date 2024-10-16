@@ -97,6 +97,7 @@ outputs:
     {{ header('api', 'API', '') }}
         - deprecated >=1.2.6,<2.0a0
         - setuptools >=16.0
+        - importlib-metadata >=6.0, <=8.5.0
     {{ test_imports('api', '') }}
         - opentelemetry
         - opentelemetry.attributes
@@ -258,20 +259,20 @@ outputs:
   # #       - opentelemetry.propagators.jaeger
   # #       - opentelemetry.propagators.jaeger.version
 
-  # - name: {{ name }}-test-utils
-  #   {{ header('test-utils', 'Test Utilities', 'tests', 'sdk') }}
-  #       - asgiref >=3.0,<4.0.0a0
-  #   {{ test_imports() }}
-  #       - opentelemetry.test.asgitestutil
-  #       - opentelemetry.test.concurrency_test
-  #       - opentelemetry.test.globals_test
-  #       - opentelemetry.test.httptest
-  #       - opentelemetry.test.metrictestutil
-  #       - opentelemetry.test.mock_textmap
-  #       - opentelemetry.test.spantestutil
-  #       - opentelemetry.test.test_base
-  #       - opentelemetry.test.version
-  #       - opentelemetry.test.wsgitestutil
+  - name: {{ name }}-test-utils
+    {{ header('test-utils', 'Test Utilities', 'tests', 'sdk') }}
+        - asgiref >=3.0,<4.0.0a0
+    {{ test_imports() }}
+        - opentelemetry.test.asgitestutil
+        - opentelemetry.test.concurrency_test
+        - opentelemetry.test.globals_test
+        - opentelemetry.test.httptest
+        - opentelemetry.test.metrictestutil
+        - opentelemetry.test.mock_textmap
+        - opentelemetry.test.spantestutil
+        - opentelemetry.test.test_base
+        - opentelemetry.test.version
+        - opentelemetry.test.wsgitestutil
 
 extra:
   recipe-maintainers:
