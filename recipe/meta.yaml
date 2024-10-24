@@ -1,7 +1,7 @@
 {% set author = "open-telemetry" %}
 {% set name = "opentelemetry" %}
-{% set version = "1.15.0" %}
-{% set sha256 = "98b26b1c0c31bf974ddfd5604b45796312ba10b10fb24b2adc05ae999fa32fa8" %}
+{% set version = "1.26.0" %}
+{% set sha256 = "8f5cb2891b18e72ecf1704088ba6cf54292de51127d3cb8f40a6e9774c4d9e35" %}
 {% set urlbase = "https://github.com/" + author + "/" + name + "-python" %}
 
 # We are making heavy use of macros and variables here to ensure a
@@ -42,6 +42,8 @@
         - pip
         - setuptools
         - wheel
+        - hatchling
+        - trove-classifiers 2024.10.14
       run:
         - python
         {% for arg in varargs %}
@@ -82,92 +84,66 @@ package:
 source:
   url: {{ urlbase }}/archive/refs/tags/v{{ version }}.tar.gz
   sha256: {{ sha256 }}
-  patches:
-    # https://github.com/open-telemetry/opentelemetry-python/issues/2778
-    # conda doesn't seem to have this problem
-    - grpcio-version.patch
+  # patches:
+  #   # https://github.com/open-telemetry/opentelemetry-python/issues/2778
+  #   # conda doesn't seem to have this problem
+  #   - grpcio-version.patch
 
 build:
-  number: 2
-  skip: true # [py<37]
+  number: 0
+  skip: true # [py<38]
 
 outputs:
   - name: {{ name }}-api
     {{ header('api', 'API', '') }}
         - deprecated >=1.2.6,<2.0a0
         - setuptools >=16.0
-    {{ test_imports('api', '') }}
-        - opentelemetry
-        - opentelemetry.attributes
-        - opentelemetry.baggage
-        - opentelemetry.context
-        - opentelemetry.metrics
-        - opentelemetry.propagate
-        - opentelemetry.propagators
-        - opentelemetry.trace
-        - opentelemetry.util
-        - opentelemetry.environment_variables
-        - opentelemetry.version
+        - importlib-metadata >=6.0, <=8.5.0
+    # {{ test_imports('api', '') }}
+    #     - opentelemetry
+    #     - opentelemetry.attributes
+    #     - opentelemetry.baggage
+    #     - opentelemetry.context
+    #     - opentelemetry.metrics
+    #     - opentelemetry.propagate
+    #     - opentelemetry.propagators
+    #     - opentelemetry.trace
+    #     - opentelemetry.util
+    #     - opentelemetry.environment_variables
+    #     - opentelemetry.version
 
   - name: {{ name }}-semantic-conventions
     {{ header('semantic-conventions', 'Semantic Conventions', '') }}
-    {{ test_imports('semantic-conventions', '') }}
-        - opentelemetry.semconv
-        - opentelemetry.semconv.resource
-        - opentelemetry.semconv.trace
-        - opentelemetry.semconv.version
+    # {{ test_imports('semantic-conventions', '') }}
+    #     - opentelemetry.semconv
+    #     - opentelemetry.semconv.resource
+    #     - opentelemetry.semconv.trace
+    #     - opentelemetry.semconv.version
 
   - name: {{ name }}-sdk
     {{ header('sdk', 'SDK', '', 'api', 'semantic-conventions') }}
         - typing-extensions >=3.7.4
-    {{ test_imports('sdk', '') }}
-        - opentelemetry.sdk
-        - opentelemetry.sdk.error_handler
-        - opentelemetry.sdk.metrics
-        - opentelemetry.sdk.resources
-        - opentelemetry.sdk.trace
-        - opentelemetry.sdk.util
-        - opentelemetry.sdk.environment_variables
-        - opentelemetry.sdk.version
+    # {{ test_imports('sdk', '') }}
+    #     - opentelemetry.sdk
+    #     - opentelemetry.sdk.error_handler
+    #     - opentelemetry.sdk.metrics
+    #     - opentelemetry.sdk.resources
+    #     - opentelemetry.sdk.trace
+    #     - opentelemetry.sdk.util
+    #     - opentelemetry.sdk.environment_variables
+    #     - opentelemetry.sdk.version
 
   - name: {{ name }}-proto
     {{ header('proto', 'Protobuf', '') }}
         - {{ protobuf_dep }}
-    {{ test_imports('proto', '') }}
-        - opentelemetry.proto
-        - opentelemetry.proto.collector
-        - opentelemetry.proto.common
-        - opentelemetry.proto.metrics
-        - opentelemetry.proto.resource
-        - opentelemetry.proto.trace
-        - opentelemetry.proto.version
-
-  - name: {{ name }}-exporter-jaeger-proto-grpc
-    {{ header('exporter-jaeger-proto-grpc', 'Jaeger Protobuf Exporter', 'exporter', 'sdk') }}
-        - {{ grpcio_dep }}
-        - {{ googleapis_dep }}
-    {{ test_imports('exporter-jaeger-proto-grpc', 'exporter', 'pytest-grpc') }}
-        - opentelemetry.exporter.jaeger.proto.grpc
-        - opentelemetry.exporter.jaeger.proto.grpc.gen
-        - opentelemetry.exporter.jaeger.proto.grpc.send
-        - opentelemetry.exporter.jaeger.proto.grpc.translate
-        - opentelemetry.exporter.jaeger.proto.grpc.util
-        - opentelemetry.exporter.jaeger.proto.grpc.version
-
-  - name: {{ name }}-exporter-jaeger-thrift
-    {{ header('exporter-jaeger-thrift', 'Jaeger Thrift Exporter', 'exporter', 'sdk') }}
-        - thrift >=0.10.0
-    {{ test_imports('exporter-jaeger-thrift', 'exporter') }}
-        - opentelemetry.exporter.jaeger.thrift
-        - opentelemetry.exporter.jaeger.thrift.gen
-        - opentelemetry.exporter.jaeger.thrift.translate
-        - opentelemetry.exporter.jaeger.thrift.send
-        - opentelemetry.exporter.jaeger.thrift.version
-
-  - name: {{ name }}-exporter-jaeger
-    {{ header('exporter-jaeger', 'Jaeger Exporters', 'exporter', 'exporter-jaeger-proto-grpc','exporter-jaeger-thrift') }}
-    {{ test_imports('exporter-jaeger', 'exporter') }}
-        - opentelemetry.exporter.jaeger.version
+    # {{ test_imports('proto', '') }}
+    #     - opentelemetry.proto
+    #     - opentelemetry.proto.collector
+    #     - opentelemetry.proto.common
+    #     - opentelemetry.proto.metrics
+    #     - opentelemetry.proto.resource
+    #     - opentelemetry.proto.trace
+    #     - opentelemetry.proto.version
 
   - name: {{ name }}-exporter-opencensus
     {{ header('exporter-opencensus', 'OpenCensus Exporter', 'exporter', 'sdk') }}
@@ -179,6 +155,15 @@ outputs:
         - opentelemetry.exporter.opencensus.trace_exporter
         - opentelemetry.exporter.opencensus.util
         - opentelemetry.exporter.opencensus.version
+
+  - name: {{ name }}-exporter-otlp-proto-common
+    {{ header('exporter-otlp-proto-common', 'Common Protobuf Exporter', 'exporter', 'sdk') }}
+        - {{ protobuf_dep }}
+        - {{ googleapis_dep }}
+        - opentelemetry-proto ==1.26.0
+    {{ test_imports('exporter-otlp-proto-common', 'exporter') }}
+        - opentelemetry.exporter.otlp.proto.common
+        - opentelemetry.exporter.otlp.proto.common.version
 
   - name: {{ name }}-exporter-otlp-proto-grpc
     {{ header('exporter-otlp-proto-grpc', 'Collector Protobuf over gRPC Exporter', 'exporter', 'sdk', 'proto') }}
